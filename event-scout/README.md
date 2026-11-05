@@ -1,64 +1,97 @@
-# KSE Event Scout
+# KSE Event Scout + Registrar
 
-Every morning (07:46 Kyiv time) an agent reads new KSE event announcements,
-decides which ones match your interests, and puts the good ones in your Google
-Calendar with the registration link on top.
+A two-part pipeline. It finds KSE events that match your interests, registers
+you, and puts them in your Google Calendar. Your calendar is the hand-off
+between the two parts.
 
-## What it reads
+```
+ Cloud scout (daily 07:46 Kyiv)              Registrar (your computer)
+ reads #event + KSE EVENTS calendar          picks up 📝 events
+ scores against interests.md      ── 📝 ──▶  fills the form in your logged-in browser
+ adds strong matches to calendar             marks ✅ registered / ⚠️ needs you
+```
+
+The registrar must run on your computer: KSE forms only open in a browser
+where you are signed in to KSE, and the cloud has no such browser.
+
+## Event lifecycle in your calendar (yellow events)
+
+| Title starts with | Meaning |
+|---|---|
+| `📝` | Strong match, registration pending. The registrar will handle it. |
+| `✅` | Registered. The first description line says when, with which email, which format. |
+| `⚠️` | Registrar couldn't finish. The first line says why, plus the link. |
+| *(no mark)* | Strong match, no registration needed. |
+
+## Part 1: cloud scout ✅ live
+
+Scheduled task **KSE event scout**, daily at 07:46 Kyiv time, running inside
+the Claude Code session it was created in. Instructions: [`playbook.md`](playbook.md)
+\+ [`interests.md`](interests.md).
 
 | Source | Status |
 |---|---|
-| Work Slack: `#event` | ✅ connected (account `anovak_work@kse.org.ua`) |
-| Google Calendar "KSE EVENTS" (events for students and staff) | ✅ connected |
+| Work Slack `#event` | ✅ |
+| Google Calendar "KSE EVENTS" (student + staff events) | ✅ |
 | Students Slack | ⛔ not connected (the Slack connector reaches one workspace) |
 
-## What it does with each event
+Strong matches (8–10) go in your calendar; "maybe" (5–7) and clashes are only
+listed in the run report. It reads Slack and never writes there.
 
-| Match | Action |
+## Part 2: registrar ⏳ needs a one-time setup on your computer
+
+Instructions and your form details: [`registrar.md`](registrar.md) (one file,
+paste it whole).
+
+1. Open the **Claude desktop app** (same account) and make sure the **Google
+   Calendar** connector is on.
+2. Pick the browser it will use: **Claude in Chrome** or the app's built-in
+   browser. In that browser, sign in to **both** Google accounts
+   (`anovak@kse.org.ua`, `anovak_work@kse.org.ua`) and open any `forms.kse.ua`
+   form once so your KSE login is remembered.
+3. In the desktop app, ask Claude to *"create a scheduled task named KSE event
+   registrar that runs every 2 hours from 9:00 to 21:00"* and paste the whole of
+   `registrar.md` as its prompt.
+4. **Run it once by hand** and approve the sites it asks for (`forms.kse.ua`,
+   `docs.google.com`, `forms.gle`, `zoom.us`), so later runs don't stop
+   at a permission prompt.
+5. It runs only while your computer is on and the app is open. Pending `📝`
+   events simply wait for the next run.
+
+### What the registrar fills in
+
+| Field | Value |
 |---|---|
-| Strong (8–10) | Added to your primary calendar in **yellow**. A `📝` in the title means "registration needed, link at the top of the description". |
-| Medium (5–7) | Not added; listed under "Maybe" in the run report. |
-| Low (0–4) | Skipped. |
-| Already in your calendar | Not duplicated, including events you added yourself. |
-| Clashes with your calendar or a class | Not added; listed under "Conflicts". |
+| Email | staff events → `anovak_work@kse.org.ua`; general/student → `anovak@kse.org.ua` |
+| Status | Staff, Education in Emergency Research Center, Analyst |
+| Format | In person when both are offered |
+| Required open questions | 1–2 honest sentences from "About me" |
+| Required consents | Agreed; optional newsletters left unticked |
+| Phone, patronymic, date of birth, IDs, file uploads, payment | Not provided → marks `⚠️ needs you` |
 
-After you register, delete the `📝` from the title.
+To let it fill more fields (e.g. phone), add them under "Your details" in
+`registrar.md` and update the scheduled task's prompt.
 
-## What it deliberately does not do
+### Guardrails
 
-- **Register for you.** KSE registration forms (`forms.kse.ua`, Google Forms)
-  need your KSE login, and this cloud environment cannot reach those sites. The
-  agent surfaces the link and you register; it takes about 30 seconds.
-- Post, react or DM anything in Slack. It only reads.
-- Edit or delete your existing events, or answer invitations.
-- Repeat details of your other calendar events in its reports.
+- Only KSE sites, Google Forms, Zoom registration and linktr.ee. Anything else
+  → `⚠️`.
+- Never types passwords or codes, never pays, never uploads files.
+- One submission per event, at most 5 per run. Checks the form matches the
+  event before filling it in.
+- Edits only events the scout created (title + description).
 
-## Where it runs
+## Changing things
 
-It is a scheduled task named **KSE event scout** that runs inside the Claude
-Code session it was created in. Each run's report appears in that conversation.
-Archiving that session stops the scout.
-
-## Changing it
-
-- **Interests:** edit [`interests.md`](interests.md) (or describe the change),
-  then ask Claude: *"sync my event scout with interests.md"*. The scheduled
-  task keeps its own copy of [`playbook.md`](playbook.md) + `interests.md`, so
-  file edits alone do not reach it.
-- **Time, pause, stop:** ask Claude to change, pause or delete the "KSE event
-  scout" scheduled task.
+- **Interests:** edit `interests.md`, then ask Claude here to *"sync my event
+  scout with interests.md"*. The scheduled task keeps its own copy.
+- **Form details:** edit `registrar.md`, then replace the desktop task's prompt.
+- **Pause or stop:** ask Claude to pause or delete "KSE event scout" (cloud) or
+  "KSE event registrar" (desktop).
 
 ## Possible upgrades
 
-1. **Phone notifications:** recreate the scout as a routine from the
-   claude.ai routines page with the Slack and Google Calendar connectors
-   attached. Connectors cannot be attached from inside a session in this
-   organization.
-2. **Real auto-registration:** run it from the Claude desktop app with Claude
-   in Chrome, so it can fill in forms in your logged-in browser. It works only
-   while your computer is on, and it should still stop on forms that ask
-   something it cannot know.
-3. **Students Slack:** connect that workspace, or forward its event channel
-   into a place the scout already reads.
-4. **Confirmation tracking:** read registration confirmations from
-   `event@kse.org.ua` in Gmail and remove the `📝` automatically.
+- Phone notifications for the scout: recreate it from the claude.ai routines
+  page with the Slack and Google Calendar connectors attached.
+- Students Slack: connect that workspace, or forward its event channel somewhere
+  the scout already reads.

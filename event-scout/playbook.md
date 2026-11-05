@@ -29,7 +29,14 @@ loses nothing. Step 3 stops the overlap from creating duplicates.
 
 For every announced event, extract: title, date, start and end time, location
 and/or online link, language, organiser, registration link (and deadline, if
-stated) and its source ID (Slack message `ts`, or calendar event `id`).
+stated) and its source ID (Slack message `ts`, or calendar event `id`). Also:
+
+- **Audience:** `staff` when the event is addressed to KSE employees or
+  faculty, or is part of the user's job (staff trainings, internal staff
+  meetings, research-centre events); `general` when it is open to students,
+  the KSE community or the public. If unclear, use `general`. The registrar
+  uses this to choose which email to register with.
+- **Format:** `in person`, `online` or `both`.
 
 - One post can announce several events: split them. When a post links out
   (e.g. linktr.ee) and gives no dates, list it under "Couldn't parse".
@@ -62,15 +69,17 @@ stated) and its source ID (Slack message `ts`, or calendar event `id`).
 - **Score 8–10, not already in calendar, no conflict:** create the event on the
   primary calendar with:
   - `summary`: the event title, prefixed with `📝 ` when registration is
-    required (meaning "you still need to register").
+    required (meaning "registration pending": the registrar picks these up).
   - `startTime` / `endTime` in Kyiv local time, with no offset.
   - `location`: the venue, or the online link when it is online-only.
   - `description` (plain text), in this order:
     1. `Registration: <link>` (plus the deadline, if any), or
-       `No registration needed`.
-    2. `Added by event scout. Match <score>/10: <reason>`.
-    3. The original announcement, trimmed to about 1500 characters.
-    4. Last line, the dedupe marker: `Source: slack #event ts=<ts>` or
+       `No registration needed`. Keep the link on this line on its own: the
+       registrar reads it.
+    2. `Audience: <staff|general> · Format: <in person|online|both>`
+    3. `Added by event scout. Match <score>/10: <reason>`.
+    4. The original announcement, trimmed to about 1500 characters.
+    5. Last line, the dedupe marker: `Source: slack #event ts=<ts>` or
        `Source: KSE EVENTS id=<id>`.
   - `colorId`: `"5"` (yellow), so scout-added events stand out.
   - `notificationLevel`: `NONE`. No attendees, default reminders.
@@ -82,8 +91,10 @@ stated) and its source ID (Slack message `ts`, or calendar event `id`).
 
 ## 5. Hard rules
 
-- **Never register.** Do not open, fill in or submit any registration form or
-  website. Surface the link; the user registers.
+- **Don't register here.** Do not open, fill in or submit any registration form
+  or website. The `📝` events you create are picked up by the registrar, a
+  separate task on the user's computer that registers in their logged-in
+  browser and then changes `📝` to `✅` or `⚠️`.
 - **Slack is read-only.** Never post, reply, react or send DMs.
 - **Calendar:** only create new events on the primary calendar. Never edit or
   delete events you did not create in this run, never respond to invitations,
